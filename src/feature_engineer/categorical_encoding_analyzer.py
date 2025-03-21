@@ -1,6 +1,6 @@
 from enum import Enum
 import pandas as pd
-from src.analyzers.analysis_step import AnalysisStep
+from src.feature_engineer.feature_engineer_step import FeatureEngineerStep
 
 class CategoricalEncoding(Enum):  
     ORDINAL_ENCODING = "ORDINAL_ENCODING"
@@ -12,7 +12,7 @@ class CategoricalEncoding(Enum):
 class CategoricalEncodingSolution(Enum):
     pass
 
-class CategoricalEncodingAnalyzer(AnalysisStep):
+class CategoricalEncodingAnalyzer(FeatureEngineerStep):
     @abstractmethod
     def analyze(self, data: pd.DataFrame) -> dict:
         pass
