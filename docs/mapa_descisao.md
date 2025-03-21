@@ -14,6 +14,7 @@ Este documento organiza as técnicas das etapas de **Análise Exploratória de D
   - **> 30% de ausência** → Avaliar remoção da variável ou uso de técnicas avançadas (MICE).
 - **Não** → Prosseguir para a próxima etapa.
 
+  
 ---
 
 ### **1.2. Análise de Outliers**
