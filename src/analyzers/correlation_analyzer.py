@@ -1,6 +1,9 @@
 from enum import Enum
 from abc import abstractmethod
 from src.analyzers.analysis_step import AnalysisStep
+from typing import List, Dict, Any
+import pandas as pd
+import numpy as np
 
 class CorrelationTechnique(Enum):
     """Enumera todas as técnicas de tratamento de correlação do documento."""
@@ -48,6 +51,16 @@ class CorrelationTechnique(Enum):
     SPATIAL_MODELS = "Modelos espaciais (SAR, SEM)"
     GEO_WEIGHTED_REGRESSION = "Geographically Weighted Regression"
     KRIGING = "Kriging"
+    SPATIAL_AUTOREGRESSIVE = "Modelo espacial auto regressivo"
+    CAUSAL_ANALYSIS = "Análise causal"
+    STRUCTURAL_MODELING = "Modelagem estrutural"
+    TEMPORAL_SEGMENTATION = "Segmentação temporal"
+    REGIME_SWITCH_MODELS = "Modelos de mudança de regime"
+    ELASTIC_NET = "Elastic Net"
+    ENSEMBLE_METHODS = "Métodos ensemble"
+    FEATURE_CLUSTERING = "Agrupamento de features"
+    VARIABLE_TRANSFORMATION = "Transformação de variáveis"
+    WRAPER_METHODS = "Métodos wrapper"
 
 class CorrelationScenario(Enum):
     """Associa cada tipo/cenário às técnicas de tratamento e descrições correspondentes."""
@@ -100,7 +113,7 @@ class CorrelationScenario(Enum):
         ],
         "Detectada com Spearman/η. Requer modelagem não-linear"
     )
-      # Colinearidade Estrutural
+    # Colinearidade Estrutural
     STRUCTURAL_COLLINEARITY = (
         [CorrelationTechnique.TWO_STAGE_ANALYSIS, CorrelationTechnique.STRUCTURAL_MODELING, CorrelationTechnique.LATENT_INDICATORS],
         "VIF por grupo elevado. Impacto: Confusão entre efeitos"
@@ -161,11 +174,113 @@ class CorrelationScenario(Enum):
     )
     # Demais cenários omitidos por brevidade. Padrão continua similar...
 
-    def __init__(self, techniques: list[CorrelationTechnique], description: str):
-        self.techniques = techniques
+    def __init__(self, solutions: list[CorrelationTechnique], description: str):
+        self.solutions = solutions
         self.description = description
 
+
+
 class CorrelationAnalyzer(AnalysisStep):
-    @abstractmethod
-    def analyze(self, data: pd.DataFrame) -> dict:
-        pass
+    """
+    Etapa de análise de correlação entre variáveis numéricas e com a variável alvo
+    """
+
+    def __init__(self, target: str = 'y', threshold: float = 0.6):
+        self.target = target
+        self.threshold = threshold
+
+    def analyze(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
+        df = data.replace(-999, np.nan)
+        numeric_df = df.select_dtypes(include=[np.number])
+        corr_matrix = numeric_df.corr()
+
+        results = []
+
+        # Correlação com a variável alvo
+        corr_with_target = corr_matrix[self.target].drop(self.target).sort_values(ascending=False)
+        for col, corr in corr_with_target.items():
+            sentido = 'positivo' if corr >= 0 else 'negativo'
+            abs_corr = abs(corr)
+
+            if corr >= 0.6:
+                problem = 'CORRELACAO_FORTE_POSITIVA'
+                scenario = CorrelationScenario.TARGET_CORRELATION
+                nivel = 'alta'
+            elif corr <= -0.6:
+                problem = 'CORRELACAO_FORTE_NEGATIVA'
+                scenario = CorrelationScenario.TARGET_CORRELATION
+                nivel = 'alta'
+            elif abs_corr >= 0.3:
+                problem = 'CORRELACAO_MODERADA'
+                scenario = CorrelationScenario.MODERATE_CORRELATION
+                nivel = 'moderada'
+            elif abs_corr < 0.15:
+                problem = 'SEM_CORRELACAO'
+                scenario = CorrelationScenario.NO_CORRELATION
+                nivel = 'baixa'
+            else:
+                continue
+
+            results.append({
+                'column': col,
+                'problem': problem,
+                'problem_description': scenario.description,
+                'description': scenario.description,
+                'solution': scenario.solutions[0].name if scenario.solutions else None,
+                'actions': [t.name for t in scenario.solutions] if scenario.solutions else [],
+                'statistics': {
+                    'correlation_with_target': round(corr, 3),
+                    'sentido': sentido,
+                    'nivel_relevancia': nivel
+                }
+            })
+
+        # Análise entre pares de variáveis
+        seen = set()
+        for i, col1 in enumerate(corr_matrix.columns):
+            for j, col2 in enumerate(corr_matrix.columns):
+                if j <= i or col1 == self.target or col2 == self.target:
+                    continue
+                pair = tuple(sorted([col1, col2]))
+                if pair in seen:
+                    continue
+                seen.add(pair)
+                corr_value = corr_matrix.loc[col1, col2]
+                sentido = 'positivo' if corr_value >= 0 else 'negativo'
+                abs_corr = abs(corr_value)
+
+                if corr_value >= self.threshold:
+                    problem = 'MULTICOLINEARIDADE_POSITIVA'
+                    scenario = CorrelationScenario.MULTICOLLINEARITY
+                    nivel = 'alta'
+                elif corr_value <= -self.threshold:
+                    problem = 'MULTICOLINEARIDADE_NEGATIVA'
+                    scenario = CorrelationScenario.MULTICOLLINEARITY
+                    nivel = 'alta'
+                elif 0.3 <= abs_corr < self.threshold:
+                    problem = 'CORRELACAO_MODERADA'
+                    scenario = CorrelationScenario.MODERATE_CORRELATION
+                    nivel = 'moderada'
+                elif abs_corr < 0.05:
+                    problem = 'SEM_CORRELACAO'
+                    scenario = CorrelationScenario.NO_CORRELATION
+                    nivel = 'baixa'
+                else:
+                    continue
+
+                results.append({
+                    'column': f'{col1} ~ {col2}',
+                    'problem': problem,
+                    'problem_description': scenario.description,
+                    'description': scenario.description,
+                    'solution': scenario.solutions[0].name if scenario.solutions else None,
+                    'actions': [t.name for t in scenario.solutions] if scenario.solutions else [],
+                    'statistics': {
+                        'correlation': round(corr_value, 3),
+                        'sentido': sentido,
+                        'nivel_relevancia': nivel
+                    }
+                })
+
+        return results
+

@@ -135,7 +135,7 @@ class MissingValuesAnalyzer(AnalysisStep):
             'problem': problem_type.name,
             'problem_description': problem_type.value,
             'description': problem_type.value,  # Adicionando alias para compatibilidade com testes
-            'suggestion': solution,
+            'solution': solution,
             'actions': [action.name for action in actions],
             'statistics': stats
         }

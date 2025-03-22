@@ -16,8 +16,7 @@ class TestMissingValuesAnalyzerRealData(unittest.TestCase):
     def test_real_dataset_analysis(self):
         """Testa o analisador em um dataset real"""
         # Verifica se o arquivo existe
-        self.assertTrue(os.path.exists(self.data_path), 
-                       f"Arquivo de dados '{self.data_path}' não encontrado")
+        self.assertTrue(os.path.exists(self.data_path), f"Arquivo de dados '{self.data_path}' não encontrado")
         
         # Carrega o dataset
         try:
@@ -52,8 +51,8 @@ class TestMissingValuesAnalyzerRealData(unittest.TestCase):
         for result in results:
             col = result['column']
             problem = result['problem']
-            suggestion = result['suggestion']
-            print(f"  {col}: {problem} -> {suggestion}")
+            solution = result['solution']
+            print(f"  {col}: {problem} -> {solution}")
             
             # Verifica a consistência do resultado
             self.assertIn(problem, [p.name for p in MissingValuesProblemType], 

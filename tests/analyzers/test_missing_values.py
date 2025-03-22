@@ -27,7 +27,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
             self.assertIn(MissingValuesSolution.NENHUMA_ACAO_NECESSARIA.name, result['actions'])
             self.assertEqual(result['statistics']['missing_count'], 0)
             self.assertEqual(result['statistics']['missing_percent'], 0)
-            self.assertEqual(result['suggestion'], MissingValuesSolution.NENHUMA_ACAO_NECESSARIA)
+            self.assertEqual(result['solution'], MissingValuesSolution.NENHUMA_ACAO_NECESSARIA)
             self.assertEqual(result['statistics']['missing_count'], 0)
     
     def test_few_missing_values(self):
@@ -66,7 +66,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
         
         self.assertEqual(results[0]['problem'], MissingValuesProblemType.MUITO.name)
         self.assertEqual(results[0]['statistics']['missing_percent'], 30)
-        self.assertEqual(results[0]['suggestion'], MissingValuesSolution.MICE_IMPUTER)
+        self.assertEqual(results[0]['solution'], MissingValuesSolution.MICE_IMPUTER)
         
     def test_categorical_missing_values(self):
         """Testa como valores ausentes em variáveis categóricas são tratados"""
@@ -78,7 +78,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
         results = self.analyzer.analyze(df)
         
         self.assertEqual(results[0]['statistics']['missing_percent'], 20)
-        self.assertEqual(results[0]['suggestion'], MissingValuesSolution.CATEGORIA_DESCONHECIDA)
+        self.assertEqual(results[0]['solution'], MissingValuesSolution.CATEGORIA_DESCONHECIDA)
         
     def test_target_variable_auto_detection(self):
         """Testa a detecção automática de variável alvo"""
@@ -92,7 +92,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
         
         target_result = next(r for r in results if r['column'] == 'variavel_target')
         self.assertEqual(target_result['problem'], MissingValuesProblemType.ALVO_MISSING.name)
-        self.assertEqual(target_result['suggestion'], MissingValuesSolution.EXCLUIR_LINHAS)
+        self.assertEqual(target_result['solution'], MissingValuesSolution.EXCLUIR_LINHAS)
         
     def test_target_variable_explicit(self):
         """Testa a especificação explícita de variável alvo"""
@@ -133,7 +133,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
         
         # Com esse padrão, deveria identificar como relacionada a outras variáveis
         self.assertEqual(y_result['problem'], MissingValuesProblemType.RELACIONADA.name)
-        self.assertEqual(y_result['suggestion'], MissingValuesSolution.MICE_IMPUTER)
+        self.assertEqual(y_result['solution'], MissingValuesSolution.MICE_IMPUTER)
         
     def test_mnar_pattern(self):
         """Testa detecção de Missing Not At Random (MNAR)"""
@@ -152,7 +152,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
         
         # Com esse padrão, deveria identificar como relacionada ao próprio valor
         self.assertEqual(results[0]['problem'], MissingValuesProblemType.RELACIONADA_AO_VALOR.name)
-        self.assertEqual(results[0]['suggestion'], MissingValuesSolution.ADICIONAR_FLAG_E_IMPUTAR)
+        self.assertEqual(results[0]['solution'], MissingValuesSolution.ADICIONAR_FLAG_E_IMPUTAR)
         
     def test_systematic_pattern(self):
         """Testa detecção de padrões sistemáticos de ausência"""
@@ -170,7 +170,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
         
         # Com esse padrão periódico, deveria identificar como padrão sistemático
         self.assertEqual(results[0]['problem'], MissingValuesProblemType.PADRAO_SISTEMATICO.name)
-        self.assertEqual(results[0]['suggestion'], MissingValuesSolution.ADICIONAR_FLAG_E_IMPUTAR)
+        self.assertEqual(results[0]['solution'], MissingValuesSolution.ADICIONAR_FLAG_E_IMPUTAR)
         
     def test_mixed_datatypes(self):
         """Testa mix de tipos de dados com diferentes padrões de ausência"""
@@ -189,7 +189,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
         
         self.assertEqual(num_few['problem'], MissingValuesProblemType.ESTRUTURAL.name)
         self.assertEqual(num_many['problem'], MissingValuesProblemType.MUITO.name)
-        self.assertEqual(cat['suggestion'], MissingValuesSolution.CATEGORIA_DESCONHECIDA)
+        self.assertEqual(cat['solution'], MissingValuesSolution.CATEGORIA_DESCONHECIDA)
         
     def test_edge_cases(self):
         """Testa casos extremos"""
@@ -276,7 +276,7 @@ class TestMissingValuesAnalyzer(unittest.TestCase):
         self.assertEqual(age_result['problem'], MissingValuesProblemType.POUCO.name)
         self.assertIn(income_result['problem'], 
                      [MissingValuesProblemType.RELACIONADA.name, MissingValuesProblemType.MUITO.name])
-        self.assertEqual(category_result['suggestion'], MissingValuesSolution.CATEGORIA_DESCONHECIDA)
+        self.assertEqual(category_result['solution'], MissingValuesSolution.CATEGORIA_DESCONHECIDA)
         self.assertIn(credit_score_result['problem'], 
                      [MissingValuesProblemType.RELACIONADA_AO_VALOR.name, 
                       MissingValuesProblemType.POUCO.name])
