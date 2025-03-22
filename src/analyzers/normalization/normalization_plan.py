@@ -1,7 +1,6 @@
-import numpy as np
-from sklearn.decomposition import PCA
+from src.analyzers.base.analysis_base import PlanStep
 
-class NormalizationPlanStep:
+class NormalizationPlan(PlanStep):
     def __init__(self, distribution_report=None, outlier_report=None, exclude_columns=None, skew_threshold=1.0):
         self.distribution_report = distribution_report or []
         self.outlier_report = outlier_report or []

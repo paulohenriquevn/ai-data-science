@@ -45,14 +45,14 @@ class EDAPipeline:
             outlier_report=self.reports['outliers'],
             significance_report=self.reports['significance'],
             correlation_report=self.reports['correlation']
-        ).generate_plan()
+        ).generate()
         df = self.feature_engineer(plan=feature_plan).transform(df)
 
         # Etapa 3: Normalização
         normalization_plan = self.normalization_plan_generator(
             distribution_report=self.reports['distribution'],
             outlier_report=self.reports['outliers']
-        ).generate_plan()
+        ).generate()
         self.normalizer = self.normalizer(normalization_plan)
         self.normalizer.fit(df)
         df_normalized = self.normalizer.transform(df)
@@ -62,7 +62,7 @@ class EDAPipeline:
             df=df_normalized,
             significance_report=self.reports['significance'],
             correlation_report=self.reports['correlation']
-        ).generate_plan()
+        ).generate()
         self.df_pca = self.pca_executor(pca_plan).fit_transform(df_normalized)
 
         # Etapa 5: Feature Scoring (opcional)

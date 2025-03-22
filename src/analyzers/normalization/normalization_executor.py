@@ -1,8 +1,7 @@
 from sklearn.preprocessing import StandardScaler, RobustScaler
-import pandas as pd
-import numpy as np
+from src.analyzers.base.analysis_base import ExecutionStep
 
-class NormalizationStep:
+class NormalizationExecutor(ExecutionStep):
     def __init__(self, normalization_plan):
         """
         Args:

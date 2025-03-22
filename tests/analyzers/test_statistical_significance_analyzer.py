@@ -2,7 +2,7 @@ import unittest
 import os
 import pandas as pd
 import numpy as np
-from src.analyzers.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
+from src.analyzers.statistical.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
 
 
 class TestStatisticalSignificanceAnalyzer(unittest.TestCase):

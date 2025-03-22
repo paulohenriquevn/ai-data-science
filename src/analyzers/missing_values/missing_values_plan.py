@@ -1,9 +1,12 @@
-class MissingValuesPlanFromReport:
+from src.analyzers.base.analysis_base import PlanStep
+
+
+class MissingValuesPlan(PlanStep):
     def __init__(self, missing_report, exclude_columns=None):
         self.missing_report = missing_report or []
         self.exclude_columns = exclude_columns or ["id"]
 
-    def generate_plan(self):
+    def generate(self):
         plan = {}
         for item in self.missing_report:
             col = item.get("column")

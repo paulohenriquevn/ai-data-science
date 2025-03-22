@@ -1,13 +1,14 @@
 import pandas as pd
 import numpy as np
+from src.analyzers.base.analysis_base import ExecutionStep
 
-class MissingValuesExecutor:
+class MissingValuesExecutor(ExecutionStep):
     def __init__(self, plan: dict, fill_value: float = -999):
         self.plan = plan
         self.fill_value = fill_value
 
     def execute(self, data: pd.DataFrame) -> pd.DataFrame:
-        df = data.copy()
+        df = data.copy().fillna(-999)
         for col, strategy in self.plan.items():
             if strategy == "NENHUMA_ACAO_NECESSARIA":
                 continue

@@ -6,7 +6,7 @@ from src.analyzers.feature_scorer import FeatureScorer
 from src.analyzers.missing_values import MissingValuesAnalyzer
 from src.analyzers.distribution_analyzer import DistributionAnalyzer
 from src.analyzers.outliers_analyzer import OutlierAnalyzer
-from src.analyzers.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
+from src.analyzers.statistical.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
 from src.analyzers.correlation_analyzer import CorrelationAnalyzer
 
 

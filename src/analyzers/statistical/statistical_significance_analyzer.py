@@ -5,6 +5,7 @@ from scipy.stats import ttest_ind, mannwhitneyu
 from src.analyzers.base.analysis_base import AnalysisStep
 from src.utils import detect_and_replace_placeholders
 
+
 class StatisticalSignificanceAnalyzer(AnalysisStep):
     """
     Verifica a significância estatística das variáveis numéricas em relação ao alvo (y).

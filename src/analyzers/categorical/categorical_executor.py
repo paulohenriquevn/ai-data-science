@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
+from src.analyzers.base.analysis_base import ExecutionStep
 
-class CategoricalExecutor:
+class CategoricalExecutor(ExecutionStep):
     def __init__(self, plan: dict):
         self.plan = plan
         self.ordinal_maps = {}

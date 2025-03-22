@@ -4,16 +4,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from src.analyzers.missing_values import MissingValuesAnalyzer
+
 from src.analyzers.distribution_analyzer import DistributionAnalyzer
 from src.analyzers.correlation_analyzer import CorrelationAnalyzer
-from src.analyzers.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
 from src.analyzers.outliers_analyzer import OutlierAnalyzer
 from src.analyzers.feature_scorer import FeatureScorer
 from src.analyzers.feature_engineering_plan_step import FeatureEngineeringPlanStep
 from src.analyzers.feature_engineering_step import FeatureEngineeringStep
-from src.analyzers.normalization_step import NormalizationStep
-from src.analyzers.normalization_plan_step import NormalizationPlanStep
+
 from src.analyzers.pca_plan_step import PCAPlanStep
 from src.analyzers.pca_step import PCAStep
 from src.analyzers.eda_pipeline import EDAPipeline
@@ -21,14 +19,28 @@ from src.utils import detect_and_replace_placeholders
 import io
 import sys
 from datetime import datetime
+
+# Statistical
+from src.analyzers.statistical.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
+
+# Normalization
+from src.analyzers.normalization.normalization_executor import NormalizationExecutor
+from src.analyzers.normalization.normalization_plan import NormalizationPlan
+
+# Balance
 from src.analyzers.balance.balance_analyzer import BalanceAnalyzer
 from src.analyzers.balance.balance_plan import BalancePlanStep
 from src.analyzers.balance.balance_executor import BalanceExecutorStep
-from src.analyzers.missing_values_plan import MissingValuesPlanFromReport
-from src.analyzers.missing_values_executor import MissingValuesExecutor
-from src.analyzers.categorical_analyzer import CategoricalAnalyzer
-from src.analyzers.categorical_plan import CategoricalPlan
-from src.analyzers.categorical_executor import CategoricalExecutor
+
+# Missing Values
+from src.analyzers.missing_values.missing_values_analyzer import MissingValuesAnalyzer
+from src.analyzers.missing_values.missing_values_plan import MissingValuesPlan
+from src.analyzers.missing_values.missing_values_executor import MissingValuesExecutor
+
+# Categorical
+from src.analyzers.categorical.categorical_analyzer import CategoricalAnalyzer
+from src.analyzers.categorical.categorical_plan import CategoricalPlan
+from src.analyzers.categorical.categorical_executor import CategoricalExecutor
 
 
 def print_section(title):
@@ -109,8 +121,8 @@ def main():
         outlier_analyzer=OutlierAnalyzer(),
         feature_plan_generator=FeatureEngineeringPlanStep,
         feature_engineer=FeatureEngineeringStep,
-        normalization_plan_generator=NormalizationPlanStep,
-        normalizer=NormalizationStep,
+        normalization_plan_generator=NormalizationPlan,
+        normalizer=NormalizationExecutor,
         pca_plan_generator=PCAPlanStep,
         pca_executor=PCAStep,
         feature_scorer=FeatureScorer()
@@ -261,7 +273,7 @@ def main():
     display_report(missing_report, "Relatório de Valores Ausentes")
     
     print_subsection("Plano de Valores Ausentes")
-    plan = MissingValuesPlanFromReport(missing_report).generate_plan()
+    plan = MissingValuesPlan(missing_report).generate()
     display_report(plan, "Plano de Valores Ausentes")
     
     print_subsection("Executar Plano de Valores Ausentes")

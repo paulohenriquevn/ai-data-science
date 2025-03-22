@@ -109,6 +109,9 @@ class NormalizationScenario(Enum):
     def __init__(self, technique: NormalizationTechnique, description: str):
         self.technique = technique
         self.description = description
+
+
+
 class NormalizationAnalyzer(AnalysisStep):
     @abstractmethod
     def analyze(self, data: pd.DataFrame) -> dict:

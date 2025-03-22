@@ -1,6 +1,8 @@
 import pandas as pd
+from src.analyzers.base.analysis_base import PlanStep
 
-class CategoricalPlan:
+
+class CategoricalPlan(PlanStep):
     """
     Gera um plano de transformação para variáveis categóricas baseado na análise realizada.
     """

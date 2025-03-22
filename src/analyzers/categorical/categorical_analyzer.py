@@ -1,6 +1,7 @@
 import pandas as pd
+from src.analyzers.base.analysis_base import AnalysisStep
 
-class CategoricalAnalyzer:
+class CategoricalAnalyzer(AnalysisStep):
     def __init__(self, max_unique_values=20):
         self.max_unique_values = max_unique_values
 

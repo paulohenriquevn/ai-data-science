@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 from scipy.stats import skew, kurtosis
-from src.analyzers.base.analysis_base import AnalysisStep
 from src.utils import detect_and_replace_placeholders
+from src.analyzers.base.analysis_base import AnalysisStep
 
 class MissingValuesProblemType(Enum):
     """Classificação de problemas de dados ausentes"""
