@@ -9,14 +9,7 @@ from src.analyzers.distribution_analyzer import DistributionAnalyzer
 from src.analyzers.correlation_analyzer import CorrelationAnalyzer
 from src.analyzers.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
 from src.analyzers.outliers_analyzer import OutlierAnalyzer
-from src.analyzers.outlier_treatment import OutlierTreatmentTransformer
 from src.analyzers.feature_scorer import FeatureScorer
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-import io
-import sys
-from datetime import datetime
-from src.utils import detect_and_replace_placeholders
 from src.analyzers.feature_engineering_plan_step import FeatureEngineeringPlanStep
 from src.analyzers.feature_engineering_step import FeatureEngineeringStep
 from src.analyzers.normalization_step import NormalizationStep
@@ -24,6 +17,19 @@ from src.analyzers.normalization_plan_step import NormalizationPlanStep
 from src.analyzers.pca_plan_step import PCAPlanStep
 from src.analyzers.pca_step import PCAStep
 from src.analyzers.eda_pipeline import EDAPipeline
+from src.analyzers.balance_analyzer import BalanceAnalyzer
+from src.utils import detect_and_replace_placeholders
+import io
+import sys
+from datetime import datetime
+from src.analyzers.balance_plan_step import BalancePlanStep
+from src.analyzers.balance_executor_step import BalanceExecutorStep
+from src.analyzers.missing_values_plan import MissingValuesPlanFromReport
+from src.analyzers.missing_values_executor import MissingValuesExecutor
+from src.analyzers.categorical_analyzer import CategoricalAnalyzer
+from src.analyzers.categorical_plan import CategoricalPlan
+from src.analyzers.categorical_executor import CategoricalExecutor
+
 
 def print_section(title):
     """Imprime um cabeçalho de seção formatado"""
@@ -65,10 +71,10 @@ def main():
     
     print_section("ANÁLISE EXPLORATÓRIA DE DADOS")
     
-    # 1. Carregamento e limpeza inicial dos dados
+    # 1. Carregamento e pré-processamento dos dados
     print_section("1. CARREGAMENTO E PRÉ-PROCESSAMENTO DOS DADOS")
-    df = pd.read_csv('dados/train.csv')  # Alterado para o arquivo train.csv
-    # Supondo que valores ausentes estejam representados por -999
+    df = pd.read_csv('dados/train.csv')
+    # Substituir valores faltantes codificados
     df.replace(-999, pd.NA, inplace=True)
     
     print(f"Dimensões do dataset: {df.shape[0]} linhas x {df.shape[1]} colunas")
@@ -90,20 +96,15 @@ def main():
         print(f"\nColuna target identificada: '{target_col}'")
     else:
         print("\nNenhuma coluna target padrão (y, target, Churn) encontrada")
-        
     
-    # Convertendo colunas booleanas para string para evitar erros de processamento
-    bool_cols = df.select_dtypes(include=['bool']).columns
-    df_for_analysis = df.copy()
-    for col in bool_cols:
-        df_for_analysis[col] = df_for_analysis[col].astype(str)
-        
-    # 0. Análise exploratória de dados
-    print_section("0. PIPELINE DE ANÁLISE EXPLORATÓRIA DE DADOS")
+    # 2. Executar a pipeline de análise exploratória
+    print_section("2. PIPELINE DE ANÁLISE EXPLORATÓRIA DE DADOS")
+    
+    # Configurar a pipeline com todos os analisadores necessários
     eda_pipeline = EDAPipeline(
         missing_analyzer=MissingValuesAnalyzer(),
         distribution_analyzer=DistributionAnalyzer(),
-        correlation_analyzer=CorrelationAnalyzer(),
+        correlation_analyzer=CorrelationAnalyzer(target=target_col if target_col else 'y'),
         significance_analyzer=StatisticalSignificanceAnalyzer(),
         outlier_analyzer=OutlierAnalyzer(),
         feature_plan_generator=FeatureEngineeringPlanStep,
@@ -114,33 +115,122 @@ def main():
         pca_executor=PCAStep,
         feature_scorer=FeatureScorer()
     )
+    
+    # Executar a pipeline completa
+    print("Executando pipeline de análise completa...")
     eda_pipeline.run(df)
-    df_final = eda_pipeline.df_transformed
-    df_pca = eda_pipeline.df_pca
-    print_subsection("Dataset final")
-    print(df_final.head())
+    
+    # 3. Exibir resultados da análise
+    
+    # 3.1 Resultados dos análisadores individuais
+    print_section("3. RESULTADOS DAS ANÁLISES")
+    
+    print_subsection("Análise de Valores Ausentes")
+    display_report(eda_pipeline.reports['missing'], "Relatório de Valores Ausentes")
+    
+    print_subsection("Análise de Distribuição")
+    display_report(eda_pipeline.reports['distribution'], "Relatório de Distribuição")
+    
+    print_subsection("Análise de Correlação")
+    display_report(eda_pipeline.reports['correlation'], "Relatório de Correlação")
+    
+    print_subsection("Análise de Significância Estatística")
+    display_report(eda_pipeline.reports['significance'], "Relatório de Significância Estatística")
+    
+    print_subsection("Análise de Outliers")
+    display_report(eda_pipeline.reports['outliers'], "Relatório de Outliers")
+    
+    # 3.3 Resultados das transformações
+    print_section("4. RESULTADOS DAS TRANSFORMAÇÕES")
+    
+    print_subsection("Dataset Transformado")
+    if eda_pipeline.df_transformed is not None:
+        print(f"Dimensões do dataset transformado: {eda_pipeline.df_transformed.shape}")
+        print(eda_pipeline.df_transformed.head())
+    else:
+        print("Dataset transformado não disponível.")
+    
     print_subsection("Dataset PCA")
-    print(df_pca.head())
+    if eda_pipeline.df_pca is not None:
+        print(f"Dimensões do dataset PCA: {eda_pipeline.df_pca.shape}")
+        print(eda_pipeline.df_pca.head())
+    else:
+        print("PCA não foi aplicado ou não retornou resultados.")
     
+    # 3.4 Pontuação de Features
+    print_section("5. SCORING DE FEATURES")
+    if 'feature_score' in eda_pipeline.reports and eda_pipeline.reports['feature_score']:
+        feature_report = eda_pipeline.reports['feature_score']
+        
+        if isinstance(feature_report, list) and len(feature_report) > 0:
+            print(f"Número de variáveis analisadas: {len(feature_report)}")
+            
+            # Exibir as top 10 features com maior pontuação
+            sorted_features = sorted(feature_report, key=lambda x: x.get('score_total', 0) if isinstance(x, dict) else 0, reverse=True)
+            for i, feature_info in enumerate(sorted_features[:10], 1):
+                if isinstance(feature_info, dict):
+                    col = feature_info.get('column', 'Desconhecido')
+                    score = feature_info.get('score_total', 0)
+                    selected = feature_info.get('selecionar', False)
+                    justifications = feature_info.get('justificativas', [])
+                    
+                    print(f"\n{i}. {col} (Score: {score})")
+                    print(f"   Recomendação: {'Selecionar' if selected else 'Não selecionar'}")
+                    if justifications:
+                        print(f"   Justificativas: {', '.join(justifications[:3])}...")
+                else:
+                    print(f"\n{i}. Formato de feature desconhecido: {feature_info}")
+            
+            # Tentar criar visualização de scores
+            try:
+                # Visualizar scores em um gráfico
+                plt.figure(figsize=(12, 8))
+                
+                feature_data = []
+                for f in sorted_features:
+                    if isinstance(f, dict):
+                        feature_data.append({
+                            'Feature': f.get('column', 'Unknown'),
+                            'Score': f.get('score_total', 0),
+                            'Selected': f.get('selecionar', False)
+                        })
+                
+                if feature_data:
+                    feature_df = pd.DataFrame(feature_data)
+                    
+                    # Filtrar para mostrar apenas as 15 principais features
+                    top_features = feature_df.head(15)
+                    
+                    # Criar gráfico de barras colorido por seleção
+                    sns.barplot(x='Score', y='Feature', 
+                                hue='Selected', data=top_features,
+                                palette={True: 'green', False: 'red'})
+                    
+                    plt.title('Top 15 Features por Importância')
+                    plt.legend(title='Selecionada')
+                    plt.tight_layout()
+                    plt.savefig('feature_importance.png')
+                    print("\nGráfico de importância de features salvo como 'feature_importance.png'")
+                    
+                    # Exibir lista das features selecionadas
+                    selected_features = [f.get('column') for f in sorted_features if isinstance(f, dict) and f.get('selecionar', False)]
+                    if selected_features:
+                        print_subsection("Features Recomendadas para Seleção")
+                        for i, feature in enumerate(selected_features, 1):
+                            print(f"{i}. {feature}")
+                    else:
+                        print("\nNenhuma feature foi selecionada pelo algoritmo.")
+            except Exception as e:
+                print(f"\nErro ao criar visualização de features: {str(e)}")
+        else:
+            print("O formato do relatório de features não é o esperado.")
+    else:
+        print("Pontuação de features não disponível ou não foi executada.")
     
+    # 4. Visualizações adicionais
+    print_section("6. VISUALIZAÇÕES")
     
-    
-    # Lista para armazenar os resultados de todas as análises
-    todas_analises = []
-    
-    # 2. Análise e tratamento de valores ausentes
-    print_section("2. ANÁLISE DE VALORES AUSENTES")
-    mv_analyzer = MissingValuesAnalyzer()
-    mv_report = mv_analyzer.analyze(df_for_analysis)
-    todas_analises.append(mv_report)
-    display_report(mv_report, "Relatório de Valores Ausentes")
-    
-    # Exibir estatísticas de valores ausentes por coluna
-    print_subsection("Porcentagem de Valores Ausentes por Coluna")
-    missing_pct = df.isna().mean().sort_values(ascending=False) * 100
-    print(missing_pct)
-    
-    # Visualizar gráfico de valores ausentes
+    # 4.1 Gráfico de valores ausentes
     plt.figure(figsize=(12, 6))
     sns.heatmap(df.isna(), cbar=False, yticklabels=False, cmap='viridis')
     plt.title('Valores Ausentes no Dataset')
@@ -148,33 +238,7 @@ def main():
     plt.savefig('missing_values_heatmap.png')
     print("\nGráfico de valores ausentes salvo como 'missing_values_heatmap.png'")
     
-    # 3. Análise de distribuição
-    print_section("3. ANÁLISE DE DISTRIBUIÇÃO")
-    dist_analyzer = DistributionAnalyzer()
-    dist_report = dist_analyzer.analyze(df_for_analysis)
-    todas_analises.append(dist_report)
-    display_report(dist_report, "Relatório de Distribuição das Variáveis")
-    
-    # Plotar distribuições de algumas colunas numéricas
-    numeric_cols = df.select_dtypes(include=np.number).columns[:5]  # Primeiras 5 colunas numéricas
-    plt.figure(figsize=(15, 10))
-    for i, col in enumerate(numeric_cols, 1):
-        plt.subplot(2, 3, i)
-        sns.histplot(df[col].dropna(), kde=True)
-        plt.title(f'Distribuição: {col}')
-    plt.tight_layout()
-    plt.savefig('distributions.png')
-    print("\nGráficos de distribuição salvos como 'distributions.png'")
-    
-    # 4. Análise de correlação
-    print_section("4. ANÁLISE DE CORRELAÇÃO")
-    # Usar a coluna target identificada anteriormente ou 'y' como padrão
-    corr_analyzer = CorrelationAnalyzer(target=target_col if target_col else 'y')
-    corr_report = corr_analyzer.analyze(df_for_analysis)
-    todas_analises.append(corr_report)
-    display_report(corr_report, "Relatório de Correlação")
-    
-    # Visualizar matriz de correlação
+    # 4.2 Matriz de correlação
     numeric_df = df.select_dtypes(include=np.number)
     plt.figure(figsize=(12, 10))
     corr_matrix = numeric_df.corr()
@@ -186,227 +250,75 @@ def main():
     plt.savefig('correlation_matrix.png')
     print("\nMatriz de correlação salva como 'correlation_matrix.png'")
     
-    # 5. Análise de significância estatística
-    print_section("5. ANÁLISE DE SIGNIFICÂNCIA ESTATÍSTICA")
-    stat_analyzer = StatisticalSignificanceAnalyzer()
-    stat_report = stat_analyzer.analyze(df_for_analysis)
-    todas_analises.append(stat_report)
-    display_report(stat_report, "Relatório de Significância Estatística")
-    
-    # 6. Análise e tratamento de outliers
-    print_section("6. ANÁLISE E TRATAMENTO DE OUTLIERS")
-    outlier_analyzer = OutlierAnalyzer()
-    outlier_report = outlier_analyzer.analyze(df_for_analysis)
-    todas_analises.append(outlier_report)
-    display_report(outlier_report, "Relatório de Outliers")
-    
-    # Visualizar boxplots para detectar outliers
-    plt.figure(figsize=(15, 10))
-    for i, col in enumerate(numeric_cols, 1):
-        plt.subplot(2, 3, i)
-        sns.boxplot(y=df[col].dropna())
-        plt.title(f'Boxplot: {col}')
-    plt.tight_layout()
-    plt.savefig('outliers_boxplot.png')
-    print("\nBoxplots para outliers salvos como 'outliers_boxplot.png'")
-    
-    # -------------------------------------------------------------------------------
-    # TRATAMENTO AUTOMÁTICO DE OUTLIERS APÓS ANÁLISE
-    # -------------------------------------------------------------------------------
-
-    print_subsection("Tratamento Automático de Outliers com base na análise")
-
-    # Gerar plano de tratamento com base no relatório
-    treatment_plan = {}
-    for item in outlier_report:
-        col = item.get("column")
-        stats = item.get("statistics", {})
-        skew = stats.get("skewness", 0)
-        ratio = stats.get("outlier_ratio", 0)
-
-        if skew is not None and skew > 1.5:
-            treatment_plan[col] = "log"
-        elif ratio >= 0.1:
-            treatment_plan[col] = "winsorize"
-        else:
-            treatment_plan[col] = "remove"
-
-    # Aplicar tratamento com transformer
-    outlier_transformer = OutlierTreatmentTransformer(treatment_plan=treatment_plan)
-    outlier_transformer.fit(df_for_analysis)
-    df_for_analysis = outlier_transformer.transform(df_for_analysis)
-
-    print(f"{len(treatment_plan)} variáveis tratadas com estratégias específicas.")
-    print(f"Plano aplicado: {treatment_plan}")
-    
-    # 6. Análise e tratamento de outliers após tratamento
-    print_section("6. ANÁLISE E TRATAMENTO DE OUTLIERS APÓS TRATAMENTO")
-    outlier_analyzer = OutlierAnalyzer()
-    outlier_report = outlier_analyzer.analyze(df_for_analysis)
-    todas_analises.append(outlier_report)
-    display_report(outlier_report, "Relatório de Outliers após tratamento")
-    
-    # Visualizar boxplots para detectar outliers
-    plt.figure(figsize=(15, 10))
-    for i, col in enumerate(numeric_cols, 1):
-        plt.subplot(2, 3, i)
-        sns.boxplot(y=df_for_analysis[col].dropna())
-        plt.title(f'Boxplot: {col}')
-    plt.tight_layout()
-    plt.savefig('outliers_boxplot_tratado.png')
-    print("\nBoxplots para outliers tratados salvos como 'outliers_boxplot_tratado.png'")
-    
-    # 6. Plano para engenharia de features
-    print_section("6. PLANO PARA ENGENHARIA DE FEATURES")
-    plan_generator = FeatureEngineeringPlanStep(
-        distribution_report=dist_report,
-        outlier_report=outlier_report,
-        significance_report=stat_report,
-        correlation_report=corr_report
-    )
-    feature_engineering_plan = plan_generator.generate_plan()
-    display_report(feature_engineering_plan, "Plano de Engenharia de Features")
-
-    # 7. Aplicar o plano de engenharia de features aos dados
-    print_section("7. ENGENHARIA DE FEATURES")
-    step = FeatureEngineeringStep(plan=feature_engineering_plan)
-    df_enriched = step.transform(df_for_analysis)
-    print_subsection("Dataset com engenharia de features")
-    print(df_enriched.head())
-    
-    # 8. Plano para normalização
-    print_section("8. PLANO PARA NORMALIZAÇÃO")
-    normalization_plan = NormalizationPlanStep(distribution_report=dist_report, outlier_report=outlier_report)
-    normalization_plan = normalization_plan.generate_plan()
-    display_report(normalization_plan, "Plano de Normalização")
-
-    # 9. Normalizar os dados
-    print_section("9. NORMALIZAÇÃO DOS DADOS")
-    normalizer = NormalizationStep(normalization_plan=normalization_plan)
-    normalizer.fit(df_enriched)
-    df_normalized = normalizer.transform(df_enriched)
-    print_subsection("Dataset com normalização")
-    print(df_normalized.head()) 
-    
-    # 10. Plano para PCA
-    print_section("10. PLANO PARA PCA")
-    pca_plan = PCAPlanStep(df=df_normalized, significance_report=stat_report, correlation_report=corr_report)
-    pca_plan = pca_plan.generate_plan()
-    display_report(pca_plan, "Plano de PCA")
-    
-    # 11. PCA
-    print_section("11. PCA")
-    pca_step = PCAStep(pca_plan=pca_plan)
-    df_pca = pca_step.fit_transform(df_normalized)
-    print_subsection("Dataset com PCA")
-    print(df_pca.head())
-
-    # 11. Feature scoring e seleção de características
-    print_section("11. SCORING E SELEÇÃO DE FEATURES")
-    if target_col:
-        print(f"Utilizando '{target_col}' como coluna alvo para análise de features")
-        
-        # Instanciar o FeatureScorer
-        scorer = FeatureScorer()
-        
-        # Passo todas as análises anteriores para o FeatureScorer
-        print(f"Consolidando resultados de {len(todas_analises)} análises anteriores")
-        feature_report = scorer.analyze(df_for_analysis, todas_analises)
-        
-        print_subsection("Resultados da Pontuação de Features")
-        print(f"Número de variáveis analisadas: {len(feature_report)}")
-        
-        # Exibir as top 10 features com maior pontuação
-        sorted_features = sorted(feature_report, key=lambda x: x.get('score_total', 0), reverse=True)
-        for i, feature_info in enumerate(sorted_features[:10], 1):
-            col = feature_info.get('column', 'Desconhecido')
-            score = feature_info.get('score_total', 0)
-            selected = feature_info.get('selecionar', False)
-            justifications = feature_info.get('justificativas', [])
-            
-            print(f"\n{i}. {col} (Score: {score})")
-            print(f"   Recomendação: {'Selecionar' if selected else 'Não selecionar'}")
-            print(f"   Justificativas: {', '.join(justifications[:3])}...")
-        
-        # Visualizar scores em um gráfico
-        if sorted_features:
-            plt.figure(figsize=(12, 8))
-            feature_df = pd.DataFrame([
-                {
-                    'Feature': f.get('column', 'Unknown'),
-                    'Score': f.get('score_total', 0),
-                    'Selected': f.get('selecionar', False)
-                }
-                for f in sorted_features
-            ])
-            
-            # Filtrar para mostrar apenas as 15 principais features
-            top_features = feature_df.head(15)
-            
-            # Criar gráfico de barras colorido por seleção
-            bars = sns.barplot(x='Score', y='Feature', 
-                               hue='Selected', data=top_features,
-                               palette={True: 'green', False: 'red'})
-            
-            plt.title('Top 15 Features por Importância')
-            plt.legend(title='Selecionada')
-            plt.tight_layout()
-            plt.savefig('feature_importance.png')
-            print("\nGráfico de importância de features salvo como 'feature_importance.png'")
-            
-            # Exibir lista das features selecionadas
-            selected_features = [f.get('column') for f in sorted_features if f.get('selecionar', False)]
-            print_subsection("Features Recomendadas para Seleção")
-            for i, feature in enumerate(selected_features, 1):
-                print(f"{i}. {feature}")
-    else:
-        print("\nNenhuma coluna target encontrada para avaliação de features.")
-    
-    # 11. PCA para análise de componentes principais (opcional)
-    print_section("11. ANÁLISE DE COMPONENTES PRINCIPAIS (PCA)")
-    numeric_df = df.select_dtypes(include=np.number).dropna()
-    
-    if len(numeric_df) > 0:
-        # Normalizar dados
-        scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(numeric_df)
-        
-        # Aplicar PCA
-        pca = PCA()
-        pca_result = pca.fit_transform(scaled_data)
-        
-        # Mostrar variância explicada
-        print_subsection("Variância Explicada pelos Componentes")
-        var_ratio = pca.explained_variance_ratio_
-        cum_var_ratio = np.cumsum(var_ratio)
-        
-        for i, (var, cum_var) in enumerate(zip(var_ratio, cum_var_ratio)):
-            print(f"PC{i+1}: {var:.4f} ({cum_var:.4f} acumulado)")
-            if cum_var > 0.9 and i > 2:
-                print(f">> {i+1} componentes explicam mais de 90% da variância")
-                break
-        
-        # Gráfico da variância explicada
-        plt.figure(figsize=(10, 6))
-        plt.bar(range(1, len(var_ratio) + 1), var_ratio, alpha=0.5, label='Variância Individual')
-        plt.step(range(1, len(cum_var_ratio) + 1), cum_var_ratio, where='mid', label='Variância Acumulada')
-        plt.axhline(y=0.9, color='r', linestyle='--', label='90% da Variância')
-        plt.xlabel('Componentes Principais')
-        plt.ylabel('Proporção da Variância Explicada')
-        plt.legend(loc='best')
-        plt.title('PCA - Análise de Componentes Principais')
-        plt.tight_layout()
-        plt.savefig('pca_variance.png')
-        print("\nGráfico de PCA salvo como 'pca_variance.png'")
-    else:
-        print("Dados numéricos insuficientes para PCA.")
-    
     print_section("ANÁLISE CONCLUÍDA")
     print("Todos os relatórios e visualizações foram gerados com sucesso.")
     print("Verifique os arquivos de imagem salvos no diretório atual para visualizações.")
     
-    # Criar arquivo de saída com timestamp
+    print_section("ANÁLISE DE VALORES AUSENTES")   
+    print_subsection("Análise de Valores Ausentes")
+    analyzer = MissingValuesAnalyzer()
+    missing_report = analyzer.analyze(df)
+    display_report(missing_report, "Relatório de Valores Ausentes")
+    
+    print_subsection("Plano de Valores Ausentes")
+    plan = MissingValuesPlanFromReport(missing_report).generate_plan()
+    display_report(plan, "Plano de Valores Ausentes")
+    
+    print_subsection("Executar Plano de Valores Ausentes")
+    df = MissingValuesExecutor(plan).execute(df)
+    display_report(df, "Dataset com Valores Ausentes Executados")
+    
+    print_section("ANÁLISE DE VALORES AUSENTES CONCLUÍDA")   
+    print_subsection("Análise de Valores Ausentes Final")
+    analyzer_final = MissingValuesAnalyzer()
+    missing_report_final = analyzer_final.analyze(df)
+    display_report(missing_report_final, "Relatório de Valores Ausentes Final")
+    
+    print_section("ANÁLISE DE CATEGORIA")   
+    print_subsection("Análise de Categoria")
+    analyzer = CategoricalAnalyzer()
+    categorical_report = analyzer.analyze(df)
+    display_report(categorical_report, "Relatório de Categoria")    
+    
+    print_subsection("Plano de Categoria")
+    plan = CategoricalPlan(categorical_report).generate()
+    display_report(plan, "Plano de Categoria")
+    
+    print_subsection("Executar Plano de Categoria")
+    df = CategoricalExecutor(plan).execute(df)
+    display_report(df, "Dataset com Categoria Executado")
+    
+    print_section("ANÁLISE DE BALANCEAMENTO")   
+    print_subsection("Análise de Balanceamento")
+    analyzer = BalanceAnalyzer(target_column="y")
+    balance_report = analyzer.analyze(df)
+    display_report(balance_report, "Relatório de Balanceamento") 
+
+    print_subsection("Plano de Balanceamento")
+    balance_plan = BalancePlanStep(balance_report).generate_plan()
+    display_report(balance_plan, "Plano de Balanceamento")
+    
+    print_subsection("Executar Balanceamento")
+    executor = BalanceExecutorStep(strategy=balance_plan["strategy"], target_column="y")
+    balanced_df = executor.execute(df)
+    display_report(balanced_df, "Dataset Balanceado")
+    
+    print_section("ANÁLISE DE BALANCEAMENTO CONCLUÍDA")   
+    print_subsection("Análise de Balanceamento Final")
+    analyzer_final = BalanceAnalyzer(target_column="y")
+    balance_report_final = analyzer_final.analyze(balanced_df)
+    display_report(balance_report_final, "Relatório de Balanceamento Final") 
+    
+    # Salvar datasets processados
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Salvar dataset transformado
+    if eda_pipeline.df_transformed is not None:
+        transformed_filename = f"dataset_transformado_{timestamp}.csv"
+        eda_pipeline.df_transformed.to_csv(transformed_filename, index=False)
+        print(f"\nDataset transformado salvo como: {transformed_filename}")
+    
+    # Criar arquivo de saída com timestamp
     output_file = f"analise_dataset_{timestamp}.txt"
     
     # Restaurar stdout e salvar a saída capturada no arquivo

@@ -1,133 +1,66 @@
 from enum import Enum
+from typing import Dict, Any
 import pandas as pd
-from src.analyzers.analysis_step import AnalysisStep
+import numpy as np
+from abc import ABC, abstractmethod
 
-class BalanceTechnique(Enum):
-    """Técnicas de balanceamento mapeadas do documento."""
-    RANDOM_UNDERSAMPLING = "Random Undersampling"
-    NEARMISS = "NearMiss"
-    TOMEK_LINKS = "Tomek Links"
-    CONDENSED_NEAREST_NEIGHBORS = "Condensed Nearest Neighbors (CNN)"
-    RANDOM_OVERSAMPLING = "Random Oversampling"
-    SMOTE = "SMOTE"
-    BORDERLINE_SMOTE = "Borderline-SMOTE"
-    ADASYN = "ADASYN"
-    SMOTE_TOMEK_LINKS = "SMOTE + Tomek Links"
-    SMOTETOMEK = "SMOTETomek"
-    SMOTE_ENN = "SMOTE + ENN"
-    CLASS_WEIGHTS = "Class Weights"
-    COST_SENSITIVE_LEARNING = "Cost-Sensitive Learning"
-    ENSEMBLE_BALANCEAMENTO = "Ensemble com Balanceamento"
-    BALANCED_BAGGING = "Bagging-based (BalancedBaggingClassifier)"
-    EASY_ENSEMBLE = "EasyEnsemble"
-    RUSBOOST = "RUSBoost"
-    THRESHOLD_MOVING = "Threshold Moving"
-    ONE_CLASS_LEARNING = "One-Class Learning"
 
-class BalanceScenario(Enum):
-    """Associação direta entre cenários e técnicas conforme o documento."""
-    
-    # Undersampling
-    DATASET_GRANDE_MAIORIA = (
-        BalanceTechnique.RANDOM_UNDERSAMPLING, 
-        "Datasets muito grandes com muitos exemplos da classe majoritária"
-    )
-    FRONTEIRA_SEMANTICA_ESPACIAL = (
-        BalanceTechnique.NEARMISS, 
-        "Fronteira de decisão importante ou semântica espacial relevante"
-    )
-    LIMPEZA_PRE_PROCESSAMENTO = (
-        BalanceTechnique.TOMEK_LINKS, 
-        "Limpeza de dados ou pré-processamento combinado com outras técnicas"
-    )
-    REDUCAO_SUBSTANCIAL_DADOS = (
-        BalanceTechnique.CONDENSED_NEAREST_NEIGHBORS, 
-        "Redução substancial de dados com fronteira bem definida"
-    )
-    
-    # Oversampling
-    POUCOS_EXEMPLOS_MINORITARIOS = (
-        BalanceTechnique.RANDOM_OVERSAMPLING, 
-        "Conjuntos pequenos ou perda significativa com undersampling"
-    )
-    EXPANSAO_ESPACO_CARACTERISTICAS = (
-        BalanceTechnique.SMOTE, 
-        "Poucos exemplos minoritários e dados numéricos"
-    )
-    FRONTEIRA_DECISAO_CRITICA = (
-        BalanceTechnique.BORDERLINE_SMOTE, 
-        "Fronteira de decisão crítica para discriminação entre classes"
-    )
-    REGIOES_DIFICEIS_NAO_UNIFORMES = (
-        BalanceTechnique.ADASYN, 
-        "Distribuição não uniforme com muitas regiões difíceis"
-    )
-    
-    # Híbridos
-    SOBREPOSICAO_CLASSES = (
-        BalanceTechnique.SMOTE_TOMEK_LINKS, 
-        "Datasets com sobreposição entre classes"
-    )
-    WORKFLOW_PADRONIZADO = (
-        BalanceTechnique.SMOTETOMEK, 
-        "Workflow padronizado usando bibliotecas como imbalanced-learn"
-    )
-    DADOS_RUIDOSOS_AGRESIVO = (
-        BalanceTechnique.SMOTE_ENN, 
-        "Datasets com muito ruído e limpeza prioritária"
-    )
-    
-    # Algoritmo
-    PRESERVA_DADOS_ORIGINAIS = (
-        BalanceTechnique.CLASS_WEIGHTS, 
-        "Algoritmos que suportam pesos (ex: SVM, Random Forest)"
-    )
-    CUSTOS_ERRO_ESPECIFICOS = (
-        BalanceTechnique.COST_SENSITIVE_LEARNING, 
-        "Custos de erro conhecidos (ex: fraude, diagnóstico)"
-    )
-    
-    # Ensemble
-    MAXIMIZAR_PERFORMANCE = (
-        BalanceTechnique.ENSEMBLE_BALANCEAMENTO, 
-        "Conjuntos grandes com recursos computacionais disponíveis"
-    )
-    VARIANCIA_ALTA_UNDERSAMPLING = (
-        BalanceTechnique.BALANCED_BAGGING, 
-        "Variância alta após undersampling em datasets médios/grandes"
-    )
-    PROBLEMAS_COMPLEXOS_RECURSOS = (
-        BalanceTechnique.EASY_ENSEMBLE, 
-        "Problemas complexos com recursos computacionais"
-    )
-    GRANDES_DATASETS_EFICIENCIA = (
-        BalanceTechnique.RUSBOOST, 
-        "Grandes datasets onde random undersampling funciona bem"
-    )
-    
-    # Pós-processamento
-    AJUSTE_LIMIAR_PROBABILIDADE = (
-        BalanceTechnique.THRESHOLD_MOVING, 
-        "Ajuste de limiar pós-treinamento com probabilidades calibradas"
-    )
-    
-    # Casos extremos
-    CLASSES_EXTREMAMENTE_RARAS = (
-        BalanceTechnique.ONE_CLASS_LEARNING, 
-        "Classes extremamente desbalanceadas (< 1%) ou detecção de anomalias"
-    )
+class AnalysisStep(ABC):
+    @abstractmethod
+    def analyze(self, data: pd.DataFrame) -> Dict[str, Any]:
+        pass
 
-    def __init__(self, technique: BalanceTechnique, description: str):
-        self.technique = technique
-        self.description = description
-    
+
+class BalanceProblem(Enum):
+    BALANCEADO = "Balanceamento adequado"
+    DESEQUILIBRIO_LEVE = "Desequilíbrio leve"
+    DESEQUILIBRIO_MODERADO = "Desequilíbrio moderado"
+    DESEQUILIBRIO_FORTE = "Desequilíbrio forte"
+
+
 class BalanceSolution(Enum):
-    pass
+    NENHUMA = "Nenhuma ação necessária"
+    UNDERSAMPLING = "Aplicar undersampling na classe majoritária"
+    OVERSAMPLING = "Aplicar oversampling na classe minoritária"
+    SMOTE = "Aplicar técnica SMOTE para balanceamento"
+    AUMENTAR_DADOS = "Coletar ou gerar mais dados da classe minoritária"
+
 
 class BalanceAnalyzer(AnalysisStep):
-    def analyze(self, data: pd.DataFrame) -> dict:
-        # Implementar lógica de análise de balanceamento
+    def __init__(self, target_column: str = "y"):
+        self.target_column = target_column
+
+    def analyze(self, data: pd.DataFrame) -> Dict[str, Any]:
+        if self.target_column not in data.columns:
+            raise ValueError(f"Coluna alvo '{self.target_column}' não encontrada no DataFrame.")
+
+        class_counts = data[self.target_column].value_counts().to_dict()
+        total = sum(class_counts.values())
+        majority = max(class_counts.values())
+        minority = min(class_counts.values())
+        imbalance_ratio = minority / majority if majority != 0 else 0
+
+        if imbalance_ratio > 0.8:
+            problem = BalanceProblem.BALANCEADO
+            solutions = [BalanceSolution.NENHUMA]
+        elif imbalance_ratio > 0.6:
+            problem = BalanceProblem.DESEQUILIBRIO_LEVE
+            solutions = [BalanceSolution.SMOTE, BalanceSolution.OVERSAMPLING]
+        elif imbalance_ratio > 0.4:
+            problem = BalanceProblem.DESEQUILIBRIO_MODERADO
+            solutions = [BalanceSolution.SMOTE, BalanceSolution.OVERSAMPLING, BalanceSolution.UNDERSAMPLING]
+        else:
+            problem = BalanceProblem.DESEQUILIBRIO_FORTE
+            solutions = [BalanceSolution.SMOTE, BalanceSolution.OVERSAMPLING, BalanceSolution.UNDERSAMPLING, BalanceSolution.AUMENTAR_DADOS]
+
         return {
-            'summary': 'Dataset desbalanceado (proporção 1:10)',
-            'suggested_techniques': ['SMOTE', 'Class Weights']
+            "target_column": self.target_column,
+            "class_distribution": class_counts,
+            "imbalance_ratio": round(imbalance_ratio, 3),
+            "problem": problem.name,
+            "problem_description": problem.value,
+            "solution": solutions[0].name,
+            "actions": [s.name for s in solutions]
         }
+
+
