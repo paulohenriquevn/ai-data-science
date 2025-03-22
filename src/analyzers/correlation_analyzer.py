@@ -6,61 +6,107 @@ import pandas as pd
 import numpy as np
 
 class CorrelationTechnique(Enum):
-    """Enumera todas as técnicas de tratamento de correlação do documento."""
-    FEATURE_SELECTION = "Seleção de features"
-    REMOVE_VARIABLE = "Remoção de uma das variáveis"
-    CREATE_COMPOSITE_INDICATORS = "Criação de indicadores compostos"
-    LINEAR_TRANSFORMATION = "Transformações para linearizar relações"
-    NON_PARAMETRIC_METHODS = "Métodos não paramétricos"
-    POLYNOMIAL_EXPANSION = "Expansão polinomial"
+    """Técnicas de análise de correlação entre variáveis."""
+    PEARSON = "Correlação de Pearson"
+    SPEARMAN = "Correlação de Spearman"
+    KENDALL = "Correlação de Kendall"
+    POINT_BISERIAL = "Correlação Point-Biserial"
+    PHI_COEFFICIENT = "Coeficiente Phi"
+    CRAMERS_V = "V de Cramer"
+    MUTUAL_INFORMATION = "Informação Mútua"
+    MAXIMAL_INFORMATION_COEFFICIENT = "Coeficiente de Informação Máxima"
+    DISTANCE_CORRELATION = "Correlação de Distância"
+    CANONICAL_CORRELATION = "Correlação Canônica"
+    
+    # Técnicas adicionais
+    PARTIAL_CORRELATION = "Correlação Parcial"
+    SEMI_PARTIAL_CORRELATION = "Correlação Semi-Parcial"
+    POLYCHORIC_CORRELATION = "Correlação Policórica"
+    TETRACHORIC_CORRELATION = "Correlação Tetracórica"
+    BIWEIGHT_MIDCORRELATION = "Correlação Biweight Midweight"
+    RANK_BISERIAL_CORRELATION = "Correlação Rank-Biserial"
+    
+    # Técnicas para séries temporais
+    CROSS_CORRELATION = "Correlação Cruzada"
+    COHERENCE = "Coerência"
+    WAVELET_COHERENCE = "Coerência Wavelet"
+    DYNAMIC_TIME_WARPING = "Dynamic Time Warping"
+    GRANGER_CAUSALITY = "Causalidade de Granger"
+    
+    # Técnicas multivariadas
+    PRINCIPAL_COMPONENT_ANALYSIS = "Análise de Componentes Principais"
+    FACTOR_ANALYSIS = "Análise Fatorial"
+    STRUCTURAL_EQUATION_MODELING = "Modelagem de Equações Estruturais"
+    
+    # Técnicas não-lineares
+    NONLINEAR_CORRELATION = "Correlação Não-Linear"
+    MAXIMAL_CORRELATION = "Correlação Máxima"
+    HOEFFDING_D = "D de Hoeffding"
+    DISTANCE_COVARIANCE = "Covariância de Distância"
+    
+    # Técnicas de aprendizado de máquina
+    RANDOM_FOREST_IMPORTANCE = "Importância de Random Forest"
+    GRADIENT_BOOSTING_IMPORTANCE = "Importância de Gradient Boosting"
+    PERMUTATION_IMPORTANCE = "Importância por Permutação"
+    
+    # Modelos econométricos
+    PANEL_DATA_MODELS = "Modelos de Dados em Painel"
+    TIME_SERIES_MODELS = "Modelos de Séries Temporais"
+    VECTOR_AUTOREGRESSION = "Vetores Autorregressivos (VAR)"
+    REGIME_SWITCHING_MODELS = "Modelos de Mudança de Regime"
+    REGIME_SWITCH_MODELS = "Modelos de Mudança de Regime (alternativo)"
+    
+    # Técnicas bayesianas
+    BAYESIAN_CORRELATION = "Correlação Bayesiana"
+    BAYESIAN_NETWORK = "Rede Bayesiana"
+    
+    # Técnicas de visualização
+    SCATTER_PLOT = "Gráfico de Dispersão"
+    HEAT_MAP = "Mapa de Calor"
+    NETWORK_GRAPH = "Grafo de Rede"
+    CHORD_DIAGRAM = "Diagrama de Acordes"
+    
+    # Técnicas adicionais mencionadas em CorrelationScenario
+    FEATURE_SELECTION = "Seleção de Features"
+    REMOVE_VARIABLE = "Remover Variável"
+    CREATE_COMPOSITE_INDICATORS = "Criar Indicadores Compostos"
+    REGULARIZATION = "Regularização"
+    PCA = "PCA"
+    STEPWISE_SELECTION = "Seleção Stepwise"
+    VARIABLE_REDEFINITION = "Redefinição de Variável"
     DIFFERENTIATION = "Diferenciação"
     ARIMA_MODELING = "Modelagem ARIMA"
-    LAGS_AS_PREDICTORS = "Inclusão de lags como preditores"
-    GLS = "GLS (Mínimos Quadrados Generalizados)"
-    REGULARIZATION = "Regularização (Ridge, Lasso)"
-    PCA = "Análise de Componentes Principais (PCA)"
-    STEPWISE_SELECTION = "Seleção stepwise"
-    VARIABLE_REDEFINITION = "Redefinição de variáveis"
-    TWO_STAGE_ANALYSIS = "Análise em dois estágios"
-    HIERARCHICAL_MODELING = "Modelagem hierárquica"
-    LATENT_INDICATORS = "Indicadores latentes"
-    INCLUDE_CONTROLS = "Inclusão de controles"
-    MATCHING_METHODS = "Métodos de pareamento"
-    INSTRUMENTAL_VARIABLES = "Variáveis instrumentais"
-    MEDIATION_ANALYSIS = "Análise de mediação"
-    SPECIFIC_ENCODING = "Encoding específico"
-    CATEGORY_COMBINATION = "Combinação de categorias"
-    CORRESPONDENCE_ANALYSIS = "Análise de correspondência"
-    TARGET_BASED_SELECTION = "Seleção baseada em correlação"
-    WRAPPER_METHODS = "Métodos wrapper"
-    TREE_IMPORTANCE = "Importância em modelos de árvore"
-    VARIABLE_PARAM_MODELS = "Modelagem com parâmetros variáveis"
-    TIME_SEGMENTATION = "Segmentação temporal"
-    REGIME_SWITCH_MODELS = "Modelos de mudança de regime"
+    GLS = "GLS"
+    LINEAR_TRANSFORMATION = "Transformação Linear"
+    NON_PARAMETRIC_METHODS = "Métodos Não-Paramétricos"
+    POLYNOMIAL_EXPANSION = "Expansão Polinomial"
+    TWO_STAGE_ANALYSIS = "Análise em Duas Etapas"
+    STRUCTURAL_MODELING = "Modelagem Estrutural"
+    LATENT_INDICATORS = "Indicadores Latentes"
+    INCLUDE_CONTROLS = "Incluir Controles"
+    MATCHING_METHODS = "Métodos de Matching"
+    CAUSAL_ANALYSIS = "Análise Causal"
+    SPECIFIC_ENCODING = "Codificação Específica"
+    CATEGORY_COMBINATION = "Combinação de Categorias"
+    CORRESPONDENCE_ANALYSIS = "Análise de Correspondência"
+    TARGET_BASED_SELECTION = "Seleção Baseada no Target"
+    WRAPER_METHODS = "Métodos Wrapper"
+    TREE_IMPORTANCE = "Importância em Árvores"
+    VARIABLE_PARAM_MODELS = "Modelos de Parâmetros Variáveis"
+    TEMPORAL_SEGMENTATION = "Segmentação Temporal"
     ELASTIC_NET = "Elastic Net"
-    ENSEMBLE_METHODS = "Métodos ensemble"
-    RECURSIVE_SELECTION = "Seleção recursiva"
-    FEATURE_CLUSTERING = "Agrupamento de features"
-    VARIABLE_TRANSFORMATION = "Transformação de variáveis"
-    ROBUST_SE = "Erros padrão robustos"
-    WLS = "Modelos ponderados (WLS)"
-    INTERACTION_TERMS = "Inclusão de termos de interação"
-    GAM = "GAM (Modelos Aditivos Generalizados)"
-    FIXED_EFFECTS = "Modelos de efeitos fixos/aleatórios"
-    WITHIN_TRANSFORMATION = "Transformação within"
-    SPATIAL_MODELS = "Modelos espaciais (SAR, SEM)"
-    GEO_WEIGHTED_REGRESSION = "Geographically Weighted Regression"
+    ENSEMBLE_METHODS = "Métodos Ensemble"
+    FEATURE_CLUSTERING = "Agrupamento de Features"
+    VARIABLE_TRANSFORMATION = "Transformação de Variáveis"
+    ROBUST_SE = "Erros Padrão Robustos"
+    WLS = "WLS"
+    INTERACTION_TERMS = "Termos de Interação"
+    GAM = "GAM"
+    FIXED_EFFECTS = "Efeitos Fixos"
+    WITHIN_TRANSFORMATION = "Transformação Within"
+    SPATIAL_AUTOREGRESSIVE = "Autorregressão Espacial"
+    GEO_WEIGHTED_REGRESSION = "Regressão Ponderada Geograficamente"
     KRIGING = "Kriging"
-    SPATIAL_AUTOREGRESSIVE = "Modelo espacial auto regressivo"
-    CAUSAL_ANALYSIS = "Análise causal"
-    STRUCTURAL_MODELING = "Modelagem estrutural"
-    TEMPORAL_SEGMENTATION = "Segmentação temporal"
-    REGIME_SWITCH_MODELS = "Modelos de mudança de regime"
-    ELASTIC_NET = "Elastic Net"
-    ENSEMBLE_METHODS = "Métodos ensemble"
-    FEATURE_CLUSTERING = "Agrupamento de features"
-    VARIABLE_TRANSFORMATION = "Transformação de variáveis"
-    WRAPER_METHODS = "Métodos wrapper"
 
 class CorrelationScenario(Enum):
     """Associa cada tipo/cenário às técnicas de tratamento e descrições correspondentes."""
@@ -113,6 +159,27 @@ class CorrelationScenario(Enum):
         ],
         "Detectada com Spearman/η. Requer modelagem não-linear"
     )
+    
+    # Correlação Moderada
+    MODERATE_CORRELATION = (
+        [
+            CorrelationTechnique.FEATURE_SELECTION,
+            CorrelationTechnique.VARIABLE_TRANSFORMATION,
+            CorrelationTechnique.INTERACTION_TERMS
+        ],
+        "0.3 ≤ |r| < 0.7. Associação razoável, útil para modelagem"
+    )
+    
+    # Sem Correlação
+    NO_CORRELATION = (
+        [
+            CorrelationTechnique.REMOVE_VARIABLE,
+            CorrelationTechnique.NONLINEAR_CORRELATION,
+            CorrelationTechnique.POLYNOMIAL_EXPANSION
+        ],
+        "|r| < 0.15. Ausência de relação linear, verificar relações não-lineares"
+    )
+    
     # Colinearidade Estrutural
     STRUCTURAL_COLLINEARITY = (
         [CorrelationTechnique.TWO_STAGE_ANALYSIS, CorrelationTechnique.STRUCTURAL_MODELING, CorrelationTechnique.LATENT_INDICATORS],
