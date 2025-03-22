@@ -1,119 +1,105 @@
 import unittest
 import pandas as pd
 import numpy as np
-from src.analyzers.missing_values import MissingValuesAnalyzer, MissingValuesProblem, MissingValuesSolution
-
+from src.analyzers.missing_values import MissingValuesAnalyzer, MissingValuesProblemType, MissingValuesSolution
 
 class TestMissingValuesAnalyzer(unittest.TestCase):
     
     def setUp(self):
+        """Configuração para cada teste"""
         self.analyzer = MissingValuesAnalyzer()
         
     def test_no_missing_values(self):
-        """Testa análise em DataFrame sem valores ausentes."""
+        """Testa o caso de nenhum valor ausente"""
         df = pd.DataFrame({
             'col1': [1, 2, 3, 4, 5],
             'col2': ['a', 'b', 'c', 'd', 'e']
         })
         
-        result = self.analyzer.analyze(df)
+        results = self.analyzer.analyze(df)
         
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['problem'], MissingValuesProblem.NO_MISSING_VALUES.name)
-        self.assertIsNone(result[0]['solution'])
-        self.assertEqual(result[0]['column'], [])
+        # Verifica se há resultados para ambas as colunas
+        self.assertEqual(len(results), 2)
         
-    def test_less_than_5_percent_missing(self):
-        """Testa análise em DataFrame com menos de 5% de valores ausentes."""
+        # Verifica se ambas as colunas são classificadas como sem problemas
+        for result in results:
+            self.assertEqual(result['problem'], MissingValuesProblemType.NENHUM.name)
+            self.assertEqual(result['description'], MissingValuesProblemType.NENHUM.value)
+            self.assertIn(MissingValuesSolution.NENHUMA_ACAO_NECESSARIA.name, result['actions'])
+            self.assertEqual(result['statistics']['missing_count'], 0)
+            self.assertEqual(result['statistics']['missing_percent'], 0)
+            self.assertEqual(result['suggestion'], MissingValuesSolution.NENHUMA_ACAO_NECESSARIA)
+    
+    def test_few_missing_values(self):
+        """Testa o caso de poucos valores ausentes (<5%)"""
         df = pd.DataFrame({
-            'col1': [1, 2, 3, 1, 2, 3, 4, None, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-            'col2': ['a', 'b', 'c', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't']
+            'col1': [1, 2, 3, 4, None, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+            'col2': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't']
         })
         
-        result = self.analyzer.analyze(df)
+        results = self.analyzer.analyze(df)
         
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['column'], 'col1')
-        self.assertEqual(result[0]['problem'], MissingValuesProblem.LESS_5.name)
-        self.assertEqual(result[0]['solution'], MissingValuesSolution.IMPUTATION_MEDIA)
+        # Encontra o resultado para col1
+        col1_result = next(r for r in results if r['column'] == 'col1')
         
-    def test_between_5_and_30_percent_missing(self):
-        """Testa análise em DataFrame com entre 5% e 30% de valores ausentes."""
+        # Verifica se col1 é classificada como tendo poucos valores ausentes
+        self.assertEqual(col1_result['problem'], MissingValuesProblemType.POUCO.name)
+        self.assertEqual(col1_result['description'], MissingValuesProblemType.POUCO.value)
+        self.assertEqual(col1_result['statistics']['missing_count'], 1)
+        self.assertEqual(col1_result['statistics']['missing_percent'], 5)
+        self.assertIn(MissingValuesSolution.IMPUTE_MEDIA.name, col1_result['actions'])
+        self.assertEqual(col1_result['suggestion'], MissingValuesSolution.IMPUTE_MEDIA)
+        
+        # Verifica se col2 é classificada como sem problemas
+        col2_result = next(r for r in results if r['column'] == 'col2')
+        self.assertEqual(col2_result['problem'], MissingValuesProblemType.NENHUM.name)
+    
+    def test_many_missing_values(self):
+        """Testa o caso de muitos valores ausentes (>20%)"""
         df = pd.DataFrame({
-            'col1': [1, 2, 3, 4, 5, 6, 7, None, None, None]
+            'col1': [1, 2, 3, None, None, None, None, 8, 9, 10]
         })
         
-        result = self.analyzer.analyze(df)
+        results = self.analyzer.analyze(df)
+        col1_result = results[0]
         
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['column'], 'col1')
-        self.assertEqual(result[0]['problem'], MissingValuesProblem.BETWEEN_5_30.name)
-        self.assertEqual(result[0]['solution'], MissingValuesSolution.IMPUTATION_MEDIANA)
-        
-    def test_greater_than_30_percent_missing(self):
-        """Testa análise em DataFrame com mais de 30% de valores ausentes."""
+        # Verifica se col1 é classificada como tendo muitos valores ausentes
+        self.assertEqual(col1_result['problem'], MissingValuesProblemType.MUITO.name)
+        self.assertEqual(col1_result['description'], MissingValuesProblemType.MUITO.value)
+        self.assertEqual(col1_result['statistics']['missing_count'], 4)
+        self.assertEqual(col1_result['statistics']['missing_percent'], 40)
+        self.assertIn(MissingValuesSolution.MICE_IMPUTER.name, col1_result['actions'])
+        self.assertEqual(col1_result['suggestion'], MissingValuesSolution.MICE_IMPUTER)
+    
+    def test_target_variable_missing(self):
+        """Testa o caso de valores ausentes na variável alvo"""
         df = pd.DataFrame({
-            'col1': [1, 2, 3, None, None, None, None]
+            'feature1': [1, 2, 3, 4, 5],
+            'feature2': [10, 20, 30, 40, 50],
+            'target': [1, 0, None, 1, 0]
         })
         
-        result = self.analyzer.analyze(df)
+        results = self.analyzer.analyze(df)
+        target_result = next(r for r in results if r['column'] == 'target')
         
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['column'], 'col1')
-        self.assertEqual(result[0]['problem'], MissingValuesProblem.GREATER_30.name)
-        self.assertEqual(result[0]['solution'], MissingValuesSolution.REMOVE_COLUMN)
-        
-    def test_multiple_columns_with_missing_values(self):
-        """Testa análise em DataFrame com múltiplas colunas com valores ausentes."""
+        # Verifica se a coluna target é classificada corretamente
+        self.assertEqual(target_result['problem'], MissingValuesProblemType.ALVO_MISSING.name)
+        self.assertEqual(target_result['description'], MissingValuesProblemType.ALVO_MISSING.value)
+        self.assertIn(MissingValuesSolution.EXCLUIR_LINHAS.name, target_result['actions'])
+        self.assertEqual(target_result['suggestion'], MissingValuesSolution.EXCLUIR_LINHAS)
+    
+    def test_categorical_column_suggestion(self):
+        """Testa se colunas categóricas recebem sugestões apropriadas"""
         df = pd.DataFrame({
-            'col1': [1, 2, None, 4, 5, 1, 2, 3, 4, 5],
-            'col2': [None, 2, 3, None, 5, 1, 2, 3, 4, 5 ],
+            'cat_col': ['a', 'b', 'c', None, 'e', None, 'g', 'h', 'i', 'j']
         })
         
-        result = self.analyzer.analyze(df)
+        results = self.analyzer.analyze(df)
+        cat_result = results[0]
         
-        self.assertEqual(len(result), 2)
-        
-        # Verificar se as colunas estão nos resultados (a ordem pode variar)
-        columns = [r['column'] for r in result]
-        self.assertIn('col1', columns)
-        self.assertIn('col2', columns)
-        
-        # Verificar as soluções para cada coluna
-        for r in result:
-            if r['column'] == 'col1':
-                self.assertEqual(r['problem'], MissingValuesProblem.BETWEEN_5_30.name)
-                self.assertEqual(r['solution'], MissingValuesSolution.IMPUTATION_MEDIANA)
-            elif r['column'] == 'col2':
-                self.assertEqual(r['problem'], MissingValuesProblem.BETWEEN_5_30.name)
-                self.assertEqual(r['solution'], MissingValuesSolution.IMPUTATION_MEDIANA)
-                
-    def test_edge_case_exactly_5_percent(self):
-        """Testa caso de borda com exatamente 5% de valores ausentes."""
-        df = pd.DataFrame({
-            'col1': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, None]
-        })
-        
-        result = self.analyzer.analyze(df)
-        
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['column'], 'col1')
-        self.assertEqual(result[0]['problem'], MissingValuesProblem.BETWEEN_5_30.name)
-        self.assertEqual(result[0]['solution'], MissingValuesSolution.IMPUTATION_MEDIANA)
-        
-    def test_edge_case_exactly_30_percent(self):
-        """Testa caso de borda com exatamente 30% de valores ausentes."""
-        df = pd.DataFrame({
-            'col1': [1, 2, 3, 4, 5, 6, 7, None, None, None]
-        })
-        
-        result = self.analyzer.analyze(df)
-        
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['column'], 'col1')
-        self.assertEqual(result[0]['problem'], MissingValuesProblem.BETWEEN_5_30.name)
-        self.assertEqual(result[0]['solution'], MissingValuesSolution.IMPUTATION_MEDIANA)
-
+        # Verifica se a coluna categórica recebe a sugestão de categoria 'Desconhecido'
+        self.assertIn(MissingValuesSolution.CATEGORIA_DESCONHECIDA.name, cat_result['actions'])
+        self.assertEqual(cat_result['suggestion'], MissingValuesSolution.CATEGORIA_DESCONHECIDA)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main() 
