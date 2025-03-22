@@ -6,6 +6,7 @@ from typing import List, Dict, Any
 import pandas as pd
 import numpy as np
 from src.analyzers.analysis_step import AnalysisStep
+from src.utils import detect_and_replace_placeholders
 
 class OutliersProblem(Enum):
     """Tipos de problemas de outliers conforme a tabela"""
@@ -153,7 +154,7 @@ class OutlierAnalyzer(AnalysisStep):
 
     def analyze(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
         results = []
-        df = data.replace(-999, np.nan)
+        df = detect_and_replace_placeholders(data)
         numeric_cols = df.select_dtypes(include=[np.number]).columns
 
         for col in numeric_cols:

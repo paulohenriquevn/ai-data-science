@@ -4,6 +4,7 @@ from src.analyzers.analysis_step import AnalysisStep
 from typing import List, Dict, Any
 import pandas as pd
 import numpy as np
+from src.utils import detect_and_replace_placeholders
 
 class CorrelationTechnique(Enum):
     """Técnicas de análise de correlação entre variáveis."""
@@ -257,7 +258,8 @@ class CorrelationAnalyzer(AnalysisStep):
         self.threshold = threshold
 
     def analyze(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
-        df = data.replace(-999, np.nan)
+        df = detect_and_replace_placeholders(data)
+        
         numeric_df = df.select_dtypes(include=[np.number])
         corr_matrix = numeric_df.corr()
 

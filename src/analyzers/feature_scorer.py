@@ -2,6 +2,7 @@ from typing import List, Dict, Any
 from collections import defaultdict
 import pandas as pd
 from src.analyzers.analysis_step import AnalysisStep
+from src.utils import detect_and_replace_placeholders
 
 class FeatureScorer(AnalysisStep):
     """
@@ -28,6 +29,7 @@ class FeatureScorer(AnalysisStep):
         }
 
     def analyze(self, data: pd.DataFrame, analises: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        data = detect_and_replace_placeholders(data)
         score_map = defaultdict(lambda: {'score': 0, 'justificativas': []})
 
         for resultado_analise in analises:

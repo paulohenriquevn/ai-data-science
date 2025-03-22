@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind, mannwhitneyu
 from src.analyzers.analysis_step import AnalysisStep
-
+from src.utils import detect_and_replace_placeholders
 
 class StatisticalSignificanceAnalyzer(AnalysisStep):
     """
@@ -17,7 +17,7 @@ class StatisticalSignificanceAnalyzer(AnalysisStep):
 
     def analyze(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
         results = []
-        df = data.replace(-999, np.nan)
+        df = detect_and_replace_placeholders(data)
         features = [col for col in df.select_dtypes(include=[np.number]).columns if col != self.target]
 
         for col in features:

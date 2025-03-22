@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 from src.analyzers.analysis_step import AnalysisStep
-
+from src.utils import detect_and_replace_placeholders
 
 class DistributionType(Enum):
     """Tipos de distribuições estatísticas"""
@@ -140,6 +140,7 @@ class DistributionAnalyzer(AnalysisStep):
         Returns:
             Lista de dicionários com resultados para cada coluna
         """
+        data = detect_and_replace_placeholders(data)
         results = []
         
         # Selecionar apenas colunas numéricas (não booleanas)
