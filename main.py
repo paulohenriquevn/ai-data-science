@@ -21,7 +21,7 @@ import sys
 from datetime import datetime
 
 # Statistical
-from src.analyzers.statistical.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
+from src.analyzers.statistical.statistical_analyzer import StatisticalSignificanceAnalyzer
 
 # Normalization
 from src.analyzers.normalization.normalization_executor import NormalizationExecutor
