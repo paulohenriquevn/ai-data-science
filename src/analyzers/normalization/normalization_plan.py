@@ -7,7 +7,7 @@ class NormalizationPlan(PlanStep):
         self.exclude_columns = exclude_columns or ["id", "y"]
         self.skew_threshold = skew_threshold
 
-    def generate_plan(self):
+    def generate(self):
         plan = {}
         for item in self.distribution_report:
             col = item.get("column")

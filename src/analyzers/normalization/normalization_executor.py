@@ -11,7 +11,7 @@ class NormalizationExecutor(ExecutionStep):
         self.scalers = {}
         self.columns_to_scale = list(normalization_plan.keys())
 
-    def fit(self, df):
+    def execute(self, df):
         df = df.copy()
         for col in self.columns_to_scale:
             method = self.normalization_plan.get(col)

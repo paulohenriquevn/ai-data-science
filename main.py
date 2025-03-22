@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from src.analyzers.distribution_analyzer import DistributionAnalyzer
-from src.analyzers.correlation_analyzer import CorrelationAnalyzer
+from src.analyzers.correlation.correlation_analyzer import CorrelationAnalyzer
 from src.analyzers.outliers_analyzer import OutlierAnalyzer
 from src.analyzers.feature_scorer import FeatureScorer
 from src.analyzers.feature_engineering_plan_step import FeatureEngineeringPlanStep

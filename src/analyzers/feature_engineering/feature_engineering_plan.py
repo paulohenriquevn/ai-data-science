@@ -1,11 +1,13 @@
-class FeatureEngineeringPlanStep:
+from src.analyzers.base.analysis_base import PlanStep
+
+class FeatureEngineeringPlan(PlanStep):
     def __init__(self, distribution_report=None, outlier_report=None, significance_report=None, correlation_report=None):
         self.distribution_report = distribution_report or []
         self.outlier_report = outlier_report or []
         self.significance_report = significance_report or []
         self.correlation_report = correlation_report or []
 
-    def generate_plan(self):
+    def generate(self):
         transformations = {}
         flags = []
         interactions = []

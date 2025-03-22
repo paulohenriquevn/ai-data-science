@@ -144,48 +144,8 @@ class OutliersScenario(Enum):
 
 
 class OutlierAnalyzer(AnalysisStep):
-    """
-    Detecta outliers em variáveis numéricas com base no método do IQR (Interquartil).
-    Também calcula a proporção de outliers por variável.
-    """
-
     def __init__(self, threshold: float = 0.05):
         self.threshold = threshold  # proporção mínima de outliers para considerar relevante
 
     def analyze(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
-        results = []
-        df = detect_and_replace_placeholders(data)
-        numeric_cols = df.select_dtypes(include=[np.number]).columns
-
-        for col in numeric_cols:
-            serie = df[col].dropna()
-            if len(serie) < 10:
-                continue
-
-            q1 = serie.quantile(0.25)
-            q3 = serie.quantile(0.75)
-            iqr = q3 - q1
-            lower_bound = q1 - 1.5 * iqr
-            upper_bound = q3 + 1.5 * iqr
-
-            outliers = serie[(serie < lower_bound) | (serie > upper_bound)]
-            outlier_ratio = len(outliers) / len(serie)
-
-            if outlier_ratio >= self.threshold:
-                results.append({
-                    'column': col,
-                    'problem': 'MUITOS_OUTLIERS',
-                    'problem_description': 'Alta proporção de outliers detectada com base no IQR',
-                    'description': 'Variável com muitos valores extremos',
-                    'solution': 'TRATAMENTO_OUTLIERS',
-                    'actions': ['WINSORIZACAO', 'TRANSFORMACAO_LOG', 'REMOVER_OUTLIERS'],
-                    'statistics': {
-                        'q1': round(q1, 3),
-                        'q3': round(q3, 3),
-                        'iqr': round(iqr, 3),
-                        'outlier_ratio': round(outlier_ratio, 4),
-                        'num_outliers': int(len(outliers))
-                    }
-                })
-
-        return results
+        return data

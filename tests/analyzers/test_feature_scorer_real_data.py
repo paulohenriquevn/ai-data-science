@@ -7,7 +7,7 @@ from src.analyzers.missing_values import MissingValuesAnalyzer
 from src.analyzers.distribution_analyzer import DistributionAnalyzer
 from src.analyzers.outliers_analyzer import OutlierAnalyzer
 from src.analyzers.statistical.statistical_significance_analyzer import StatisticalSignificanceAnalyzer
-from src.analyzers.correlation_analyzer import CorrelationAnalyzer
+from src.analyzers.correlation.correlation_analyzer import CorrelationAnalyzer
 
 
 class TestFeatureScorerRealData(unittest.TestCase):
