@@ -17,13 +17,13 @@ from src.analyzers.normalization_plan_step import NormalizationPlanStep
 from src.analyzers.pca_plan_step import PCAPlanStep
 from src.analyzers.pca_step import PCAStep
 from src.analyzers.eda_pipeline import EDAPipeline
-from src.analyzers.balance_analyzer import BalanceAnalyzer
 from src.utils import detect_and_replace_placeholders
 import io
 import sys
 from datetime import datetime
-from src.analyzers.balance_plan_step import BalancePlanStep
-from src.analyzers.balance_executor_step import BalanceExecutorStep
+from src.analyzers.balance.balance_analyzer import BalanceAnalyzer
+from src.analyzers.balance.balance_plan import BalancePlanStep
+from src.analyzers.balance.balance_executor import BalanceExecutorStep
 from src.analyzers.missing_values_plan import MissingValuesPlanFromReport
 from src.analyzers.missing_values_executor import MissingValuesExecutor
 from src.analyzers.categorical_analyzer import CategoricalAnalyzer
@@ -295,7 +295,7 @@ def main():
     display_report(balance_report, "Relatório de Balanceamento") 
 
     print_subsection("Plano de Balanceamento")
-    balance_plan = BalancePlanStep(balance_report).generate_plan()
+    balance_plan = BalancePlanStep(balance_report).generate()
     display_report(balance_plan, "Plano de Balanceamento")
     
     print_subsection("Executar Balanceamento")

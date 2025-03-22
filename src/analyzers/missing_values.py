@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 from scipy.stats import skew, kurtosis
-from src.analyzers.analysis_step import AnalysisStep
+from src.analyzers.base.analysis_base import AnalysisStep
 from src.utils import detect_and_replace_placeholders
 
 class MissingValuesProblemType(Enum):

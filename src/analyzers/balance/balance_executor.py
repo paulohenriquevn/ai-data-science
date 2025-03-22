@@ -1,9 +1,10 @@
 from imblearn.over_sampling import SMOTE
 from sklearn.utils import resample
 import pandas as pd
+from src.analyzers.base.analysis_base import ExecutionStep
 
 
-class BalanceExecutorStep:
+class BalanceExecutorStep(ExecutionStep):
     def __init__(self, strategy: str = "SMOTE", target_column: str = "y"):
         self.strategy = strategy
         self.target_column = target_column

@@ -1,14 +1,7 @@
 from enum import Enum
 from typing import Dict, Any
 import pandas as pd
-import numpy as np
-from abc import ABC, abstractmethod
-
-
-class AnalysisStep(ABC):
-    @abstractmethod
-    def analyze(self, data: pd.DataFrame) -> Dict[str, Any]:
-        pass
+from src.analyzers.base.analysis_base import AnalysisStep
 
 
 class BalanceProblem(Enum):

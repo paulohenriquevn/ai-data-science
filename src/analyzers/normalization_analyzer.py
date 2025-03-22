@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List, Tuple
 from abc import abstractmethod
 import pandas as pd
-from src.analyzers.analysis_step import AnalysisStep
+from src.analyzers.base.analysis_base import AnalysisStep
 
 class NormalizationTechnique(Enum):
     """Técnicas de normalização conforme a tabela"""

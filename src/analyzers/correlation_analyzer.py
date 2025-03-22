@@ -1,6 +1,6 @@
 from enum import Enum
 from abc import abstractmethod
-from src.analyzers.analysis_step import AnalysisStep
+from src.analyzers.base.analysis_base import AnalysisStep
 from typing import List, Dict, Any
 import pandas as pd
 import numpy as np

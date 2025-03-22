@@ -1,11 +1,14 @@
-class BalancePlanStep:
+from src.analyzers.base.analysis_base import PlanStep
+
+
+class BalancePlanStep(PlanStep):
     def __init__(self, balance_report: dict, strategy_priority: list = None):
         self.balance_report = balance_report or {}
         self.strategy_priority = strategy_priority or [
             "SMOTE", "OVERSAMPLING", "UNDERSAMPLING", "AUMENTAR_DADOS"
         ]
 
-    def generate_plan(self):
+    def generate(self):
         plan = {
             "apply_balance": False,
             "strategy": None,

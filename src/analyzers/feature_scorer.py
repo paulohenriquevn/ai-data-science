@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 from collections import defaultdict
 import pandas as pd
-from src.analyzers.analysis_step import AnalysisStep
+from src.analyzers.base.analysis_base import AnalysisStep
 from src.utils import detect_and_replace_placeholders
 
 class FeatureScorer(AnalysisStep):
