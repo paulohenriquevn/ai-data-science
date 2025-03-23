@@ -7,7 +7,7 @@ from src.analyzers.outlier.outliers_group import OutlierGroup
 from src.analyzers.normalization.normalization_group import NormalizationGroup
 from src.analyzers.categorical.categorical_group import CategoricalGroup
 from src.analyzers.dimensionalit.dimensionalit_group import DimensionalityGroup
-
+from src.analyzers.low_variability.low_variability_group import LowVariabilityGroup
 
 
 
@@ -39,7 +39,10 @@ def main():
     
     dimensionality_group = DimensionalityGroup()
     dimensionality_result = dimensionality_group.run(categorical_result["data"])    
-    print(dimensionality_result)
+    
+    low_variability_group = LowVariabilityGroup()
+    low_variability_result = low_variability_group.run(dimensionality_result["data"])
+    print(low_variability_result)
 
 
 if __name__ == "__main__":
