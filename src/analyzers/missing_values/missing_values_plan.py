@@ -2,17 +2,23 @@ from src.analyzers.base.analysis_base import PlanStep
 
 
 class MissingValuesPlan(PlanStep):
-    def __init__(self, missing_report, exclude_columns=None):
-        self.missing_report = missing_report or []
+    def __init__(self, exclude_columns=None):
         self.exclude_columns = exclude_columns or ["id"]
 
-    def generate(self):
-        plan = {}
-        for item in self.missing_report:
+    def generate(self, missing_analysis: list) -> list:
+        plan = []
+
+        for item in missing_analysis:
             col = item.get("column")
             if col in self.exclude_columns:
                 continue
-            solution = item.get("solution")
-            if solution:
-                plan[col] = solution.name  # Armazena a solução como string para uso posterior
+
+            plan.append({
+                'column': col,
+                'problem': item.get("problem", "missing_values"),
+                'suggestion': item.get("suggestion"),
+                'all_actions': item.get("actions", []),
+                'parameters': item.get("statistics", {})
+            })
+
         return plan
