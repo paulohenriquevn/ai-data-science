@@ -8,6 +8,10 @@ from src.analyzers.normalization.normalization_group import NormalizationGroup
 from src.analyzers.categorical.categorical_group import CategoricalGroup
 from src.analyzers.dimensionalit.dimensionalit_group import DimensionalityGroup
 from src.analyzers.low_variability.low_variability_group import LowVariabilityGroup
+from src.analyzers.rare_category.rare_category_group import RareCategoryGroup
+from src.analyzers.feature_Importance.feature_Importance_group import FeatureImportanceGroup
+from src.analyzers.feature_interaction.feature_interaction_group import FeatureInteractionGroup
+from src.analyzers.residual_collinearity.residual_collinearity_group import ResidualCollinearityGroup
 
 
 
@@ -42,8 +46,20 @@ def main():
     
     low_variability_group = LowVariabilityGroup()
     low_variability_result = low_variability_group.run(dimensionality_result["data"])
-    print(low_variability_result)
+    
+    rare_category_group = RareCategoryGroup()
+    rare_category_result = rare_category_group.run(low_variability_result["data"])
 
+    feature_importance_group = FeatureImportanceGroup(target_column="y")
+    feature_importance_result = feature_importance_group.run(distribution_result["data"])
 
-if __name__ == "__main__":
+    feature_interaction_group = FeatureInteractionGroup(target_column="y")
+    feature_interaction_result = feature_interaction_group.run(distribution_result["data"])
+    print(feature_interaction_result)
+
+    residual_collinearity_group = ResidualCollinearityGroup(target_column="y")
+    residual_collinearity_result = residual_collinearity_group.run(feature_interaction_result["data"])
+    print(residual_collinearity_result["data"].shape)
+
+if __name__ == "__main__":  
     main()
