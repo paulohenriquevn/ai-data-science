@@ -1,9 +1,3 @@
-#### 1. Detecção de outliers (`OutlierAnalyzer`) ✔️  
-- Aplicação do método IQR para cada variável  
-- Cálculo da proporção de outliers  
-- Recomendações: winsorização, transformação, remoção
-- Estratégias baseadas em skewness e outlier ratio
-
 
 #### 2. Padronização das variáveis numéricas ⏳  
 - Gerar plano com `NormalizationPlanStep`  

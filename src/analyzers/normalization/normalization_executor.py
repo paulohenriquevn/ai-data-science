@@ -1,31 +1,40 @@
+import pandas as pd
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from src.analyzers.base.analysis_base import ExecutionStep
 
+
 class NormalizationExecutor(ExecutionStep):
-    def __init__(self, normalization_plan):
-        """
-        Args:
-            normalization_plan: dict do tipo {coluna: "StandardScaler" | "RobustScaler"}
-        """
-        self.normalization_plan = normalization_plan
+    def __init__(self):
         self.scalers = {}
-        self.columns_to_scale = list(normalization_plan.keys())
 
-    def execute(self, df):
+    def execute(self, df: pd.DataFrame, plan: list) -> pd.DataFrame:
         df = df.copy()
-        for col in self.columns_to_scale:
-            method = self.normalization_plan.get(col)
-            if method == "RobustScaler":
-                scaler = RobustScaler()
-            else:
+
+        for step in plan:
+            col = step['column']
+            action = step['suggestion']
+
+            if col not in df.columns:
+                continue
+
+            # Redimensiona para formato (n, 1)
+            values = df[[col]].values
+
+            if action == 'STANDARD_SCALER':
                 scaler = StandardScaler()
-            self.scalers[col] = scaler.fit(df[[col]])
-        return self
+            elif action == 'ROBUST_SCALER':
+                scaler = RobustScaler()
+            elif action == 'NENHUMA':
+                continue
+            else:
+                raise NotImplementedError(f"Ação de scaling '{action}' não reconhecida.")
 
-    def transform(self, df):
-        df = df.copy()
-        for col in self.columns_to_scale:
-            scaler = self.scalers.get(col)
-            if scaler:
-                df[col + "_scaled"] = scaler.transform(df[[col]])
+            try:
+                df[col] = scaler.fit_transform(values)
+                self.scalers[col] = scaler
+            except Exception as e:
+                print(f"[Erro ao aplicar {action} em {col}]: {e}")
+
         return df
+
+
