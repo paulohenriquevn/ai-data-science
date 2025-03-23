@@ -4,11 +4,9 @@ from src.analyzers.missing_values.missing_values_group import MissingGroup
 from src.analyzers.distribution.distribution_group import DistributionGroup
 from src.analyzers.correlation.correlation_group import CorrelationGroup
 from src.analyzers.outlier.outliers_group import OutlierGroup
-from src.analyzers.normalization.normalization_analyzer import NormalizationAnalyzer
-from src.analyzers.normalization.normalization_plan import NormalizationPlan
-from src.analyzers.normalization.normalization_executor import NormalizationExecutor
-from src.analyzers.normalization.normalization_report import NormalizationReport
 from src.analyzers.normalization.normalization_group import NormalizationGroup
+from src.analyzers.categorical.categorical_group import CategoricalGroup
+from src.analyzers.dimensionalit.dimensionalit_group import DimensionalityGroup
 
 
 
@@ -36,8 +34,12 @@ def main():
     normalization_group = NormalizationGroup()  
     normalization_result = normalization_group.run(outlier_result["data"])
 
-    # Mostrar os primeiros resultados
-    print(normalization_result)
+    categorical_group = CategoricalGroup()
+    categorical_result = categorical_group.run(normalization_result["data"])
+    
+    dimensionality_group = DimensionalityGroup()
+    dimensionality_result = dimensionality_group.run(categorical_result["data"])    
+    print(dimensionality_result)
 
 
 if __name__ == "__main__":

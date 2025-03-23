@@ -1,4 +1,4 @@
-class CategoricalPlan:
+class DimensionalityPlan:
     def __init__(self, exclude_columns=None):
         self.exclude_columns = exclude_columns or ["id"]
 
@@ -12,10 +12,11 @@ class CategoricalPlan:
 
             plan.append({
                 'column': col,
-                'problem': item.get("problem", "categorical_encoding"),
+                'problem': item.get("problem", "dimensionality_reduction"),
                 'suggestion': item.get("suggestion"),
                 'all_actions': item.get("actions", []),
                 'parameters': item.get("statistics", {})
             })
 
         return plan
+
