@@ -1,10 +1,9 @@
 from sklearn.feature_selection import VarianceThreshold
 import pandas as pd
 import numpy as np
-from src.analyzers.base.analysis_base import AnalysisStep
 
 
-class CorrelationAnalyzer(AnalysisStep):
+class CorrelationAnalyzer:
     def __init__(self, target_column=None, correlation_threshold=0.9, vif_threshold=10, max_vif_features=20):
         self.target_column = target_column
         self.correlation_threshold = correlation_threshold

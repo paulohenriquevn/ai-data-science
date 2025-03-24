@@ -55,6 +55,51 @@ class OutlierAnalyzer:
 
         return results
 
+
+    def compare(self, original_df: pd.DataFrame, transformed_df: pd.DataFrame, columns: list) -> pd.DataFrame:
+        resultados = []
+
+        for col in columns:
+            original = original_df[col].dropna()
+            novo = transformed_df[col].dropna()
+
+            if original.empty or novo.empty:
+                continue
+
+            def get_stats(series):
+                q1 = series.quantile(0.25)
+                q3 = series.quantile(0.75)
+                iqr = q3 - q1
+                lower = q1 - 1.5 * iqr
+                upper = q3 + 1.5 * iqr
+                outliers = ((series < lower) | (series > upper)).sum()
+                return {
+                    "skewness": series.skew(),
+                    "kurtosis": series.kurtosis(),
+                    "outlier_ratio": outliers / len(series)
+                }
+
+            stats_before = get_stats(original)
+            stats_after = get_stats(novo)
+
+            for metric in stats_before:
+                before = stats_before[metric]
+                after = stats_after[metric]
+                delta = ((after - before) / abs(before)) * 100 if before != 0 else 0
+                resultados.append({
+                    "variavel": col,
+                    "metrica": metric,
+                    "antes": before,
+                    "depois": after,
+                    "variacao_percentual": delta
+                })
+
+        return pd.DataFrame(resultados)
+
+
+    """
+    Suggest actions based on skewness and outlier ratio.
+    """
     def _suggest_actions(self, skewness, outlier_ratio) -> list:
         actions = []
 

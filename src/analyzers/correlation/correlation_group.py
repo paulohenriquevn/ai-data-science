@@ -3,9 +3,8 @@ from src.analyzers.correlation.correlation_analyzer import CorrelationAnalyzer
 from src.analyzers.correlation.correlation_plan import CorrelationPlan
 from src.analyzers.correlation.correlation_executor import CorrelationExecutor
 from src.analyzers.correlation.correlation_report import CorrelationReport
-from src.analyzers.base.analysis_base import GroupStep
 
-class CorrelationGroup(GroupStep):
+class CorrelationGroup:
     def __init__(self, target_column=None):
         self.analyzer = CorrelationAnalyzer(target_column=target_column)
         self.planner = CorrelationPlan()

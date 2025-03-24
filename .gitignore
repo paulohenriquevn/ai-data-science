@@ -31,3 +31,10 @@ __pycache__/**/**
 *.png
 .~**
 .pytest_cache
+*.zip
+*.tar
+*.whl
+*.egg
+*.egg-info
+*.dist-info
+*.build-info
